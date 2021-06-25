@@ -26,9 +26,12 @@ class Sniffwave(StoppableThread):
         *args, **kwargs
     ):
         '''
-        :type queue: :class:`queue.Queue`
+        :type queue: :class:`queue.Queue` or [:class:`queue.Queue`, ...]
         :param queue: queues
-        :param str wave: wave identifier
+
+        :type cmd_args: str or [str,...]
+        :param str cmd_args: wave identifier
+
         :param int max_lines: maximum amount of lines to decode
         :param int max_tries: maximum amount of failed attempts
         '''
@@ -44,6 +47,8 @@ class Sniffwave(StoppableThread):
         Execute sniffwave program and listen for packets
         stop if told to stop
         '''
+        current_fails = self.max_fails
+
         try:
             logging.info(f'Executing: sniffwave {self.cmd_args}')
             proc = subprocess.Popen(
@@ -59,30 +64,35 @@ it exists in the system PATH')
 
         while not self.is_stopped \
                 and self.max_lines != 0 \
-                and self.max_fails != 0:
+                and current_fails != 0:
             # we first check if there is a return code (it stopped?)
             if proc.returncode is not None:
                 logging.error(f'sniffwave has a rcode {proc.returncode}')
                 logging.error(proc.stderr.read())
                 break
 
-            logging.debug(f'Waiting for sniffwave ({self.max_lines})')
+            logging.debug(f'Waiting for sniffwave (count: {self.max_lines}, \
+fail decount: {current_fails})')
             line = proc.stdout.readline()
+
             # do nothing if the line is empty
             if not line:
-                if self.max_fails > 0:
-                    logging.debug(f'Reducing max fail count: {self.max_fails}')
-                    self.max_fails -= 1
+                if current_fails > 0:
+                    logging.debug(f'Reducing max fail count: {current_fails}')
+                    current_fails -= 1
                 continue
 
             # parse the content of the line
             stat = parse(line.decode('utf-8'))
+
             if stat is None:
-                if self.max_fails > 0:
-                    logging.debug(f'Reducing max fail count: {self.max_fails}')
-                    self.max_fails -= 1
+                if current_fails > 0:
+                    logging.debug(f'Reducing max fail count: {current_fails}')
+                    current_fails -= 1
                 continue
 
+            # reset fail count
+            current_fails = self.max_fails
             # add message to all queues
             for q in self.queues:
                 q.put(stat)
@@ -107,6 +117,17 @@ def start(
 ):
     '''
     Start reading content of the sniffwave and send to the worker
+
+    :type myworkers: :class:`Worker` or [:class:`Worker`, ...]
+    :param myworkers: worker(s) to pass decoded sniffwave information via queue
+
+    :type cmd_args: str or [str,...]
+    :param str cmd_args: wave identifier
+
+    :param int healthcheck: interval time in seconds to check if all
+        threads are running
+    :param int max_lines: maximum amount of lines to decode
+    :param int max_tries: maximum amount of failed attempts
     '''
     if not isinstance(myworkers, list):
         myworkers = [myworkers]

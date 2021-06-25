@@ -16,6 +16,9 @@ __pycache__
 # Ignore mypy
 .mypy_cache
 
+# Ignore coverage
+.coverage
+
 # Ignore visual studio code
 .vscode
 

@@ -55,6 +55,9 @@ class Client(object):
     '''
     See module description.  NOTE: client is only designed to support
     reading or writing (not both).
+
+    :param str directory: directory where information is saved
+        (default: is cwd)
     '''
     def __init__(
         self,
@@ -67,6 +70,12 @@ class Client(object):
         '''
         Generate filename based on the at time and the directory
         stored in object state
+
+        :type at: class::`datetime.datetime`
+        :param at: current timestamp used to generate the filename
+
+        :rtype: Path
+        :returns: filename
         '''
         return self.directory.joinpath(
             at.strftime('%Y'),
@@ -78,6 +87,13 @@ class Client(object):
         '''
         Set the hdf5 store based on the at time and the directory
         stored in object state.
+
+        :type at: class::`datetime.datetime`
+        :param at: current timestamp used to generate the filename
+
+        :param kwargs: any paramters to pass to pd.HDFStore
+
+        :return: :class:`pd.HDFStore`
         '''
         filename = self.get_filename(at)
         store_props = {
@@ -110,6 +126,10 @@ class Client(object):
         '''
         Insert the dataframe into an HDF5 daily file
         based on the "at" time.
+
+        :param df: dataframe to write
+        :type at: class::`datetime.datetime`
+        :param at: current timestamp used to generate the filename
         '''
         store = self.get_store(at, mode='a')
         logging.debug(f'Writing following df\n:{df}')
@@ -129,6 +149,11 @@ class Client(object):
         '''
         Insert the dataframe into an HDF5 daily file
         based on the "at" time.
+
+        :param df: dataframe to write
+
+        :type at: class::`datetime.datetime`
+        :param at: current timestamp used to generate the filename
         '''
         store = self.get_store(at, mode='a')
         logging.debug(f'Writing following error df\n:{df}')

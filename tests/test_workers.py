@@ -10,9 +10,7 @@ def test_worker_print():
     '''
     # start the worker thread
     myworker = PrintWorker(timeout=5)
-    sniffwave.start(myworker, max_lines=50)
-
-    assert False
+    sniffwave.start(myworker, max_lines=10, max_fails=10)
 
 
 def test_worker_sqlite():
@@ -21,9 +19,7 @@ def test_worker_sqlite():
     '''
     # start the worker thread
     myworker = SQLWorker(timeout=5)
-    sniffwave.start(myworker, max_lines=50)
-
-    assert False
+    sniffwave.start(myworker, max_lines=10, max_fails=10)
 
 
 def test_worker_hdf5():
@@ -32,6 +28,4 @@ def test_worker_hdf5():
     '''
     # start the worker thread
     myworker = HDF5Worker(timeout=5)
-    sniffwave.start(myworker, max_lines=50)
-
-    assert False
+    sniffwave.start(myworker, max_lines=10, max_fails=10)

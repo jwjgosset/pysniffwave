@@ -10,10 +10,8 @@ def test_client_find():
     client = Client()
 
     now = datetime.datetime.now()
-
     # start the worker thread
     print(client.find(
         now - datetime.timedelta(days=10),
         now,
     ))
-    assert False

@@ -20,17 +20,15 @@ def parse(line: str) -> Optional[Union[Channel, ChannelError]]:
     '''
     Parse the line response of the sniffwave message.
 
-    There are 3 patterns accepted:
-
     1. standard line with latecny
-    2. gap
-    3. overlap
-    4. out-of-order
+    2. error: gap, overlap, out-of-order
 
     For an example of each, see the content of the sniffwave_output.txt in the
     test folder.
 
-    We cheat the process by simply grabbing all numeric values from the content
+    We cheat the process by simply grabbing all numeric values from the
+    content.  We do this since sniffwave output aren't constant table
+    like patterns are constant white space delimited (not a fan of the format).
     '''
     logging.info(f'Parsing line: {line}')
     # standard line with latency check (most common)

@@ -9,4 +9,3 @@ def test_parse():
     for line in fp.readlines():
         print(sniffwave.parse(line))
     fp.close()
-    assert False

@@ -26,6 +26,9 @@ class HDF5Worker(Worker):
         directory: Optional[str] = None,
         **kwargs,
     ):
+        '''
+        :param str directory: location where to store files
+        '''
         super().__init__(*args, **kwargs)
         self.directory = directory
 

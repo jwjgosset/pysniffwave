@@ -48,7 +48,7 @@ class Client(object):
         :rtype: pd.Dataframe
         '''
         query = db_session.query(Table).filter(
-            Table.inserted_at.between(starttime, endtime)
+            Table.recorded_at.between(starttime, endtime)
         )
         if network:
             query.filter(Table.network == network)

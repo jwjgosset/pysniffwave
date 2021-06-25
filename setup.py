@@ -152,7 +152,7 @@ setup(
             'pytest',
             'mypy',
             'flake8',
-            'coverage'
+            'pytest-cov'
         ],
     },
 

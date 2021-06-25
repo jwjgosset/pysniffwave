@@ -43,7 +43,8 @@ See "sniffwave" for more information.')
         '-t', '--timeout',
         default=DEFAULT_TIMEOUT,
         type=int,
-        help=f'Timeout condition (default: {DEFAULT_TIMEOUT}s)')
+        help=f'Timeout condition (s) for the HDF queue \
+(default: {DEFAULT_TIMEOUT})')
     parser.add_argument(
         '-m', '--max-lines',
         default=-1,
