@@ -49,6 +49,13 @@ MIN_ITEMSIZE_ERRORS = {
     **MIN_ITEMSIZE_CHANNELS,
     'error': 20,
 }
+DTYPES = {
+    'n_samples': 'uint16',
+    'n_bytes': 'uint16',
+    'sample_rate': 'float32',
+    'data_latency': 'float32',
+    'feeding_latency': 'float32',
+}
 
 
 class Client(object):
@@ -118,6 +125,17 @@ class Client(object):
         self._store = pd.HDFStore(**store_props)
         return self._store
 
+    @staticmethod
+    def _format_df(
+        df: pd.DataFrame
+    ) -> None:
+        '''
+        Convert the types of the dataframe
+        '''
+        for column in df.columns:
+            if column in DTYPES:
+                df[column] = df[column].astype(DTYPES[column])
+
     def write(
         self,
         df: pd.DataFrame,
@@ -132,6 +150,7 @@ class Client(object):
         :param at: current timestamp used to generate the filename
         '''
         store = self.get_store(at, mode='a')
+        Client._format_df(df)
         logging.debug(f'Writing following df\n:{df}')
         store.append(
             'channels', df,
@@ -156,6 +175,7 @@ class Client(object):
         :param at: current timestamp used to generate the filename
         '''
         store = self.get_store(at, mode='a')
+        Client._format_df(df)
         logging.debug(f'Writing following error df\n:{df}')
         store.append(
             'errors', df,
