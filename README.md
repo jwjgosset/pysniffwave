@@ -43,6 +43,31 @@ pip install numpy==1.14.5 cython pkgconfig
 pip install .
 ```
 
+## Sample systemd
+
+Below is an example systemd for sniffwave.  You'll notice that it does require the earthworm environment to be installed since it sources its environment variables.
+
+The bellow example uses the "INST_GSC" institute ID, writes log information for WAVE_RING under /data/sniffwave, and restarts the service every 30 seconds on failure up to a maximum of 5 times.
+
+```text
+[Unit]
+Description=Sniffwave logging
+After=network.target
+
+[Service]
+User=ew
+Group=efs
+Environment=EW_INSTALL_INSTALLATION=INST_GSC
+ExecStart=/bin/bash -c "source /opt/earthworm/run_working/bin/ew_linux.bash && /opt/earthworm/pysniffwave/venv/bin/sniffwave_logger -d /data/sniffwave WAVE_RING"
+Restart=always
+RestartSec=30
+StartLimitBurst=5
+StartLimitInterval=200
+
+[Install]
+WantedBy=multi-user.target
+```
+
 ## Utility
 
 HDF5 logger utility
