@@ -12,6 +12,37 @@ This project has intention of a watchdog to sniffwave with ability to do multipl
 
 Note: currently the only Worker being used as part of the utility is the HDFWorker.  The others were used for testing but still work and can be used/altered for other projects.
 
+## Installation
+
+With anaconda, you can simply install the package using:
+
+```bash
+pip install .
+```
+
+within the conda environment.
+
+However, for prefer to run these in operation using virtualenv and ansible.  The following packages must be installed (RHEL7)
+
+* python3-pip
+* python3-devel
+* python3-virtualenv
+* hdf5
+* hdf5-devel
+
+And then through pip, install the required packages.
+
+```bash
+# Create a virtual environment
+python3 -m virtualenv venv
+# Enter the virtual environment
+source venv/bin/activate
+# Install libraries compatibly for HDF5
+pip install numpy==1.14.5 cython pkgconfig
+# Install pip package and dependencies
+pip install .
+```
+
 ## Utility
 
 HDF5 logger utility
