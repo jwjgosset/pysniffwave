@@ -150,7 +150,8 @@ def start(
     mysniff.start()
 
     # infinite check if thread is still running
-    while True:
+    keep_running = True
+    while keep_running:
         logging.info('Health check: sniffwave')
         if not mysniff.is_alive():
             logging.info('Sniffwave stopped...')
@@ -159,6 +160,7 @@ def start(
             logging.info('Health check: worker')
             if not myworker.is_alive():
                 logging.info('Worker stopped...')
+                keep_running = False
                 break
         time.sleep(healthcheck)
 
