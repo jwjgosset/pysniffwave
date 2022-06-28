@@ -74,6 +74,7 @@ it exists in the system PATH')
             logging.debug(f'Waiting for sniffwave (count: {self.max_lines}, \
 fail decount: {current_fails})')
             line = proc.stdout.readline()
+            logging.debug(line)
 
             # do nothing if the line is empty
             if not line:
