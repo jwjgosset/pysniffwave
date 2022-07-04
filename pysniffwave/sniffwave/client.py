@@ -10,7 +10,8 @@ from typing import Union, List
 
 from pysniffwave.thread import StoppableThread
 from pysniffwave.workers.worker import Worker
-from .parser import parse
+from .parser import Channel, parse
+from pysniffwave.nagios.store import get_arrival_file, store_latest_timestamp
 
 
 class Sniffwave(StoppableThread):
@@ -62,6 +63,8 @@ class Sniffwave(StoppableThread):
 it exists in the system PATH')
             return
 
+        arrival_file = get_arrival_file()
+
         while not self.is_stopped \
                 and self.max_lines != 0 \
                 and current_fails != 0:
@@ -97,6 +100,12 @@ fail decount: {current_fails})')
             # add message to all queues
             for q in self.queues:
                 q.put(stat)
+
+            if isinstance(stat, Channel):
+                store_latest_timestamp(
+                    file_path=arrival_file,
+                    channel_stats=stat
+                )
 
             # maximum of lines to read
             if self.max_lines > 0:
