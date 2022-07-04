@@ -14,6 +14,8 @@ from pysniffwave.hdf5.client import Client
 
 from pysniffwave.sniffwave.parser import Channel, ChannelError
 
+from pysniffwave.nagios.store import get_arrival_file, store_latest_timestamp
+
 
 class HDF5Worker(Worker):
     '''
@@ -42,6 +44,10 @@ class HDF5Worker(Worker):
         # initialize client for HDF5 storage
         client = Client(directory=self.directory)
 
+        # Ensure the latest_timestamp file exists
+        if self.directory is not None:
+            arrival_file = get_arrival_file(directory=self.directory)
+
         while not self.is_stopped:
             logging.debug(f'Sleeping for {self.timeout}s')
             time.sleep(self.timeout)
@@ -60,6 +66,12 @@ class HDF5Worker(Worker):
                     channel_errors.append(item)
                 else:
                     channel.append(item)
+                    # Store latency and timestamp for nagios check
+                    if self.directory is not None:
+                        store_latest_timestamp(
+                            file_path=arrival_file,
+                            channel_stats=item
+                        )
 
             if len(channel):
                 client.write(

@@ -7,7 +7,7 @@ log/
 # Ignore setup.py build information
 *egg-info
 /dist/
-/build/
+build/
 
 # Ignore pytest caching
 .pytest_cache
@@ -24,3 +24,6 @@ __pycache__
 
 # Ignore any test folder for now
 2021
+
+# Ignore virtual env folder
+.venv
