@@ -75,7 +75,8 @@ class HDF5Worker(Worker):
                 else:
                     channel.append(item)
                     # Add to the latest arrival object
-                    latest_arrival.add_latest_timestamp(item)
+                    if item['channel'] in ['HNN', 'HNZ', 'HNE']:
+                        latest_arrival.add_latest_timestamp(item)
 
             if len(channel):
                 client.write(
