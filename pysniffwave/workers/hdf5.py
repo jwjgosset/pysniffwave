@@ -8,6 +8,8 @@ import datetime
 
 import pandas as pd
 
+from pysniffwave.nagios.store import LatestArrivalWorker
+
 from .worker import Worker
 
 from pysniffwave.hdf5.client import Client
@@ -38,6 +40,12 @@ class HDF5Worker(Worker):
         '''
         SQLite thread start.  It will first initation the connection
         '''
+
+        # Initialize the latest arrival object to write every 10 changes
+        latest_arrival = LatestArrivalWorker(
+            filepath='/data/sniffwave/latest_arrival.csv',
+            changes=10
+        )
         if self.queue is None:
             raise ValueError('queue was not set in worker')
 
@@ -66,13 +74,8 @@ class HDF5Worker(Worker):
                     channel_errors.append(item)
                 else:
                     channel.append(item)
-                    # Store latency and timestamp for nagios check
-                    # # They end up like 8 minutes behind (and counting)
-                    # if self.directory is not None:
-                    #     store_latest_timestamp(
-                    #         file_path=arrival_file,
-                    #         channel_stats=item
-                    #     )
+                    # Add to the latest arrival object
+                    latest_arrival.add_latest_timestamp(item)
 
             if len(channel):
                 client.write(
