@@ -43,5 +43,6 @@ def test_LatestArrivalWorker():
 
     with open(arrival_worker.path, mode='r') as f:
         lines = f.readlines()
-        assert 'IV.MGR..HHZ,2010-06-22 14:10:36.290000\n' not in lines
-        assert 'IV.MGR..HHZ,2010-06-22 20:10:38.290000\n' in lines
+        assert 'IV.MGR..HHZ,2010-06-22 14:10:36.290000,322.9,20.9\n' not in \
+            lines
+        assert 'IV.MGR..HHZ,2010-06-22 20:10:38.290000,322.9,20.9\n' in lines
