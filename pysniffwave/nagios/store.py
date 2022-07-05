@@ -1,10 +1,25 @@
+from datetime import datetime
 import pathlib
 from pysniffwave.sniffwave.parser import Channel
 import logging
 from typing import Dict, List, Union
 
 
-class LatestArrivalWorker():
+class ArrivalStat:
+    def __init__(
+        self,
+        channel: str,
+        start_time: datetime,
+        data_latency: float,
+        feeding_latency: float
+    ):
+        self.channel = channel
+        self.start_time = start_time
+        self.data_latency = data_latency
+        self.feeding_latency = feeding_latency
+
+
+class LatestArrivalWorker:
     def __init__(
         self,
         filepath: Union[str, pathlib.Path],
@@ -16,7 +31,7 @@ class LatestArrivalWorker():
 
         self.path = filepath
 
-        self.channels: Dict[str, str] = {}
+        self.channels: Dict[str, ArrivalStat] = {}
 
         # Open the file to initialize the dictionary
         if filepath.exists():
@@ -26,8 +41,14 @@ class LatestArrivalWorker():
 
                 for line in lines:
                     if line != '\n':
-                        channel, timestamp = line.split(',')
-                        self.channels[channel] = timestamp
+                        channel, start_time, data_latency, feeding_latency = \
+                            line.split(',')
+                        self.channels[channel] = ArrivalStat(
+                            channel=channel,
+                            start_time=datetime.strptime(
+                                start_time, "%Y-%m-%d %H:%M:%S.%f"),
+                            data_latency=float(data_latency),
+                            feeding_latency=float(feeding_latency))
         else:
             filepath.touch(mode=0o644)
             logging.warning(f"File {str(filepath)} did not exist, created")
@@ -50,8 +71,12 @@ class LatestArrivalWorker():
             scnl = (f"{channel['network']}.{channel['station']}." +
                     f"{channel['location']}.{channel['channel']}")
             # Add timestamp to string
-            self.channels[scnl] = channel['start_time']
-
+            self.channels[scnl] = ArrivalStat(
+                channel=scnl,
+                start_time=channel['start_time'],
+                data_latency=channel['data_latency'],
+                feeding_latency=channel['feeding_latency']
+            )
         self.currentchange += 1
 
         if self.currentchange >= self.changes:
@@ -64,7 +89,9 @@ class LatestArrivalWorker():
         lines: str = ''
 
         for channel in self.channels:
-            lines += f"{channel},{self.channels[channel]}\n"
+            lines += (f"{channel},{self.channels[channel].start_time}," +
+                      f"{self.channels[channel].data_latency}," +
+                      f"{self.channels[channel].feeding_latency}\n")
 
         with open(str(self.path), mode='w') as f:
             f.write(lines)
