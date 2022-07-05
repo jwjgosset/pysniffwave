@@ -41,12 +41,17 @@ class LatestArrivalWorker:
 
                 for line in lines:
                     if line != '\n':
-                        channel, start_time, data_latency, feeding_latency = \
-                            line.split(',')
+                        channel, start_timestring, data_latency, \
+                            feeding_latency = line.split(',')
+                        try:
+                            start_time = datetime.strptime(
+                                start_timestring, '%Y-%m-%d %H:%M:%S.%f')
+                        except ValueError:
+                            start_time = datetime.strptime(
+                                start_timestring, '%Y-%m-%d %H:%M:%S')
                         self.channels[channel] = ArrivalStat(
                             channel=channel,
-                            start_time=datetime.strptime(
-                                start_time, "%Y-%m-%d %H:%M:%S.%f"),
+                            start_time=start_time,
                             data_latency=float(data_latency),
                             feeding_latency=float(feeding_latency))
         else:
