@@ -1,59 +1,70 @@
 import pathlib
 from pysniffwave.sniffwave.parser import Channel
 import logging
-from typing import List, Union
+from typing import Dict, List, Union
 
 
-def get_arrival_file(
-    directory: str = '/data/sniffwave',
-    filename: str = 'latest_arrival.txt'
-) -> pathlib.Path:
-    file_path = pathlib.Path(directory).joinpath(filename)
+class LatestArrivalWorker():
+    def __init__(
+        self,
+        filepath: Union[str, pathlib.Path],
+        changes: int
+    ):
+        # Convert a str path to a pathlib Path
+        if isinstance(filepath, str):
+            filepath = pathlib.Path(filepath)
 
-    # Create the file if it doesn't exist
-    if not file_path.exists():
-        file_path.touch(mode=0o644)
-        logging.warning(f"File {str(file_path)} did not exist, created")
-    # Open the file in read/write mode
-    return file_path
+        self.path = filepath
 
+        self.channels: Dict[str, str] = {}
 
-def store_latest_timestamp(
-    file_path: pathlib.Path,
-    channel_stats: Union[List[Channel], Channel]
-):
-    # Assemble data in string format
+        # Open the file to initialize the dictionary
+        if filepath.exists():
 
-    # Ensure that channel_stats is iterable
-    if isinstance(channel_stats, Channel):
-        channel_stats = [channel_stats]
+            with open(filepath, mode='r') as f:
+                lines = f.readlines()
 
-    with open(file_path, mode='r') as file:
-        # Read existing lines from file
-        lines = file.readlines()
+                for line in lines:
+                    if line != '\n':
+                        channel, timestamp = line.split(',')
+                        self.channels[channel] = timestamp
+        else:
+            filepath.touch(mode=0o644)
+            logging.warning(f"File {str(filepath)} did not exist, created")
+
+        self.changes = changes
+        self.currentchange = 0
+
+    def add_latest_timestamp(
+        self,
+        channel_stats: Union[List[Channel], Channel]
+    ):
+        # Assemble data in string format
+
+        # Ensure that channel_stats is iterable
+        if isinstance(channel_stats, Channel):
+            channel_stats = [channel_stats]
+
         for channel in channel_stats:
             # Convert scnl to string
             scnl = (f"{channel['network']}.{channel['station']}." +
                     f"{channel['location']}.{channel['channel']}")
             # Add timestamp to string
-            new_line = f"{scnl},{channel['start_time']}\n"
+            self.channels[scnl] = channel['start_time']
 
-            logging.debug(new_line)
+        self.currentchange += 1
 
-            # If a line already exists with the same scnl, replace it
-            scnl_found = False
-            for i in range(len(lines)):
-                if scnl in lines[i]:
-                    lines[i] = new_line
-                    scnl_found = True
-                    logging.debug(f"Found matching line: {lines[i]}")
-                    break
+        if self.currentchange >= self.changes:
+            self.currentchange = 0
+            self.write_to_file()
+            # Write to file
 
-            # If the scnl is not in file, append a new line
-            if not scnl_found:
-                lines.append(new_line)
-                logging.debug("Appending new line")
+    def write_to_file(self):
 
-    # Write the updated lines to the file
-    with open(file_path, mode='w') as file:
-        file.write(''.join(lines))
+        lines: str = ''
+
+        for channel in self.channels:
+            lines += f"{channel},{self.channels[channel]}\n"
+
+        with open(str(self.path), mode='w') as f:
+            f.write(lines)
