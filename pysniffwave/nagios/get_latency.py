@@ -41,7 +41,10 @@ def get_latencies(
 
     for line in lines:
         channel, timestring = line.split(',')
-        timestamp = datetime.strptime(timestring, '%Y-%m-%d %H:%M:%S.%f')
+        try:
+            timestamp = datetime.strptime(timestring, '%Y-%m-%d %H:%M:%S.%f')
+        except ValueError:
+            timestamp = datetime.strptime(timestring, '%Y-%m-%d %H:%M:%S')
         latency = (time - timestamp).total_seconds()
         channel_stats = ChannelLatency(
             channel=channel,
