@@ -7,6 +7,7 @@ import subprocess
 import time
 
 from typing import Union, List
+from pysniffwave.nagios.store import LatestArrivalWorker
 
 from pysniffwave.thread import StoppableThread
 from pysniffwave.workers.worker import Worker
@@ -62,6 +63,12 @@ class Sniffwave(StoppableThread):
 it exists in the system PATH')
             return
 
+        # Initialize the latest arrival object to write every 10 changes
+        latest_arrival = LatestArrivalWorker(
+            filepath='/data/sniffwave/latest_arrival.csv',
+            changes=10
+        )
+
         while not self.is_stopped \
                 and self.max_lines != 0 \
                 and current_fails != 0:
@@ -91,6 +98,9 @@ fail decount: {current_fails})')
                     logging.debug(f'Reducing max fail count: {current_fails}')
                     current_fails -= 1
                 continue
+
+            # Add to the latest arrival object
+            latest_arrival.add_latest_timestamp(stat)
 
             # reset fail count
             current_fails = self.max_fails
