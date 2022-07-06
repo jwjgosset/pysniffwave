@@ -8,7 +8,7 @@ import datetime
 
 import pandas as pd
 
-from pysniffwave.nagios.store import LatestArrivalWorker
+from pysniffwave.nagios.arrival_metrics import LatestArrivalWorker
 
 from .worker import Worker
 

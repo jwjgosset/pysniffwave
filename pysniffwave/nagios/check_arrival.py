@@ -1,25 +1,115 @@
 from datetime import datetime
-from pysniffwave.nagios.store import LatestArrivalWorker
-from pysniffwave.nagios.models import NagiosRange, NagiosOutputCode
+from typing import List
+from pysniffwave.nagios.arrival_metrics import LatestArrivalWorker, \
+    StaleResults, TimelyResults
+from dataclasses import dataclass
+from pysniffwave.nagios.models import NagiosPerformance, NagiosResult, \
+    NagiosVerbose
 
 
-def check_fresh_arrival(
-    worker: LatestArrivalWorker,
-    current_time: datetime,
-    crit_range: str,
+@dataclass
+class ArrivalThresholds:
+    crit_range: str
     warn_range: str
-) -> NagiosOutputCode:
-    stale_channels = 0
-    for channel in worker.channels:
-        channel_age = current_time - (worker.channels[channel]).start_time
-        if channel_age.total_seconds() > 3600:
-            stale_channels += 1
+    crit_time: str
+    warn_time: str
+    crit_count: str
+    warn_count: str
 
-    if NagiosRange(crit_range).in_range(stale_channels):
-        state = NagiosOutputCode.critical
-    elif NagiosRange(warn_range).in_range(stale_channels):
-        state = NagiosOutputCode.warning
+
+def get_arrival_performance(
+    stale_results: StaleResults,
+    timely_results: TimelyResults,
+    thresholds: ArrivalThresholds
+) -> List[NagiosPerformance]:
+    '''
+    Assemble check results into performance data for Nagios XI
+
+    Parameters
+    ----------
+    stale_results: StaleResults
+        Object containing results of the check for stale channels
+
+    timely_results: TimelyResults
+        Object containing results of the check for timely arrival
+
+    thresholds: ArrivalThresholds
+        Object containing the various thresholds for the stale and timely
+        arrival checks
+
+    Returns
+    -------
+    List[NagiosPerformance]: Performance data in Nagios's standard format
+    '''
+    performances: List[NagiosPerformance] = []
+
+    performances.append(NagiosPerformance(
+        label='stale',
+        value=stale_results.count,
+        warning=float(thresholds.warn_range.strip(':')),
+        critical=float(thresholds.crit_range.strip(':'))
+    ))
+
+    performances.append(NagiosPerformance(
+        label='critical latency',
+        value=timely_results.critical,
+        critical=float(thresholds.crit_count)
+    ))
+
+    performances.append(NagiosPerformance(
+        label='warning latency',
+        value=timely_results.warning,
+        warning=float(thresholds.warn_count)
+    ))
+
+    return performances
+
+
+def get_arrival_results(
+    thresholds: ArrivalThresholds,
+    arrival_stats: LatestArrivalWorker
+) -> NagiosResult:
+
+    current_time = datetime.now()
+    stale_results = arrival_stats.check_fresh_arrival(
+        current_time=current_time,
+        thresholds=thresholds
+    )
+    timely_results = arrival_stats.check_timely_arrival(
+        thresholds=thresholds
+    )
+
+    performances = get_arrival_performance(
+        stale_results=stale_results,
+        timely_results=timely_results,
+        thresholds=thresholds
+    )
+
+    statuscode = stale_results.code
+
+    if timely_results.code.value > statuscode.value:
+        statuscode = timely_results.code
+
+    if statuscode.value == 0:
+        status = "OK"
+    elif statuscode.value == 1:
+        status = "WARNING"
+    elif statuscode.value == 2:
+        status = "CRITICAL"
     else:
-        state = NagiosOutputCode.ok
+        status = "UNKNOWN"
 
-    return state
+    summary = (f'{status} - {stale_results.count} channels stale,' +
+               f'{timely_results.warning} channels with latency above' +
+               f' {thresholds.warn_time}s, {timely_results.critical} ' +
+               f'channels with latency above {thresholds.crit_time}s')
+
+    details = ''
+
+    return NagiosResult(
+        summary=summary,
+        verbose=NagiosVerbose.multiline,
+        status=statuscode,
+        performances=performances,
+        details=details
+    )

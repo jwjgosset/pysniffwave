@@ -1,5 +1,5 @@
 import pathlib
-from pysniffwave.nagios.store import LatestArrivalWorker
+from pysniffwave.nagios.arrival_metrics import LatestArrivalWorker
 from pysniffwave.sniffwave.parser import Channel, parse
 from typing import List
 
