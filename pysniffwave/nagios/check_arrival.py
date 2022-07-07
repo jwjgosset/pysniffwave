@@ -65,6 +65,19 @@ def get_arrival_performance(
     return performances
 
 
+def get_details(
+    arrival_stats: LatestArrivalWorker
+) -> str:
+    stat_list = arrival_stats.sort_list()
+
+    details = ''
+
+    for stats in stat_list:
+        details += f"{str(stats)}\n"
+
+    return details
+
+
 def get_arrival_results(
     thresholds: ArrivalThresholds,
     arrival_stats: LatestArrivalWorker
@@ -104,7 +117,7 @@ def get_arrival_results(
                f' {thresholds.warn_time}s, {timely_results.critical} ' +
                f'channels with latency above {thresholds.crit_time}s')
 
-    details = ''
+    details = get_details(arrival_stats=arrival_stats)
 
     return NagiosResult(
         summary=summary,

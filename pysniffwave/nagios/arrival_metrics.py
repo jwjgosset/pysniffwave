@@ -1,8 +1,5 @@
-from audioop import reverse
 from datetime import datetime
 import pathlib
-import operator
-from collections import OrderedDict
 from dataclasses import dataclass
 from pysniffwave.nagios.check_arrival import ArrivalThresholds
 from pysniffwave.nagios.models import NagiosOutputCode, NagiosRange
@@ -53,12 +50,16 @@ class ArrivalStat:
         Return total latency
         '''
         return self.data_latency + self.feeding_latency
-    
-    def __gt__(self, other):
+
+    def __gt__(self, other) -> bool:
         return self.total_latency() > other.total_latency()
-    
-    def __lt__(self, other):
+
+    def __lt__(self, other) -> bool:
         return self.total_latency() < other.total_latency()
+
+    def __str__(self) -> str:
+        latency = self.total_latency()
+        return f"{self.channel}, {self.start_time.isoformat()}, {latency}s"
 
 
 class LatestArrivalWorker(Dict[str, ArrivalStat]):
@@ -272,15 +273,7 @@ class LatestArrivalWorker(Dict[str, ArrivalStat]):
             critical=critical,
             warning=warning)
 
-    def sort(self):
-        return sorted(
-                self.items(),
-                key=operator.itemgetter(1))
-
-
-    def get_details(
-        self,
-        sort: bool = True
-    ) -> str:
-        if sort is True:
-            
+    def sort_list(self):
+        stat_list = list(self.values())
+        stat_list.sort(key=lambda x: x.total_latency(), reverse=True)
+        return stat_list
