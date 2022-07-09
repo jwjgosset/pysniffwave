@@ -136,7 +136,8 @@ setup(
         'sqlalchemy',
         'h5py',
         'tables',
-        'pandas',
+        'pandas'
+        'click',
     ],  # Optional
 
     # List additional groups of dependencies here (e.g. development
@@ -180,6 +181,7 @@ setup(
     entry_points={  # Optional
         'console_scripts': [
             'sniffwave_logger=pysniffwave.bin.sniffwave_logger:main',
+            'check_arrival_metrics=pysniffwave.bin.check_arrival_metrics:main'
         ],
     },
 
