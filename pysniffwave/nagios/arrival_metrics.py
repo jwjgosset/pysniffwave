@@ -188,7 +188,7 @@ class LatestArrivalWorker(Dict[str, ArrivalStat]):
 
     def sort_list(self) -> List[ArrivalStat]:
         '''
-        Returns a sorted list of ArrivalStatistics, sorted by lowest latency
+        Returns a sorted list of ArrivalStatistics, sorted by highest latency
         first
         '''
         stat_list = list(self.values())

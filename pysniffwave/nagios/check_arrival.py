@@ -89,6 +89,7 @@ def get_details(
 
 
 def get_arrival_results(
+    current_time: datetime,
     thresholds: ArrivalThresholds,
     arrival_stats: LatestArrivalWorker
 ) -> NagiosResult:
@@ -103,7 +104,6 @@ def get_arrival_results(
 
     Of these checks, the most elevated state is used for the Nagios Result
     '''
-    current_time = datetime.now()
     stale_results = check_fresh_arrival(
         arrival_stats=arrival_stats,
         current_time=current_time,

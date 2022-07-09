@@ -1,3 +1,4 @@
+from datetime import datetime
 import click
 import logging
 from pysniffwave.config import LogLevels
@@ -79,9 +80,11 @@ def main(
         filepath=arrival_file,
         changes=-1
     )
+    current_time = datetime.now()
 
     # Check the arrival stats against the threshold
     results = get_arrival_results(
+        current_time=current_time,
         thresholds=thresholds,
         arrival_stats=arrival_stats
     )

@@ -1,1 +1,4 @@
 [run]
+omit = 
+        *pysniffwave/bin/**
+        *pysniffwave/config.py*
