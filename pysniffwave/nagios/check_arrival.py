@@ -68,6 +68,16 @@ def get_arrival_performance(
 def get_details(
     arrival_stats: LatestArrivalWorker
 ) -> str:
+    '''
+    Extract the data from a LatestArrivalWorker and assembles it in a sorted
+    string, to use as the details in a multiline NagiosCheckResult
+
+    Parameters
+    ----------
+
+    arrival_stats: LatestArrivalWorker
+        The object to extract data from
+    '''
     stat_list = arrival_stats.sort_list()
 
     details = ''
@@ -82,7 +92,17 @@ def get_arrival_results(
     thresholds: ArrivalThresholds,
     arrival_stats: LatestArrivalWorker
 ) -> NagiosResult:
+    '''
+    Takes arrival statistics and compares them to a set of thresholds to come
+    up with a Nagios Check Result
 
+    One threshold that is checked is the number of channels that are over an
+    hour without a fresh packet. Each channel is also checked against a
+    warning latency threshold and critical latency threshold, and those counts
+    are compared to a threshold.
+
+    Of these checks, the most elevated state is used for the Nagios Result
+    '''
     current_time = datetime.now()
     stale_results = arrival_stats.check_fresh_arrival(
         current_time=current_time,

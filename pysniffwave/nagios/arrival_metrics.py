@@ -8,12 +8,14 @@ import logging
 from typing import Dict, List, Union
 
 
+# Data class for results of the Stale check
 @dataclass
 class StaleResults:
     code: NagiosOutputCode
     count: int
 
 
+# Data class for the results of the Timely check
 @dataclass
 class TimelyResults:
     code: NagiosOutputCode
@@ -52,12 +54,21 @@ class ArrivalStat:
         return self.data_latency + self.feeding_latency
 
     def __gt__(self, other) -> bool:
+        '''
+        Compare based on total latency
+        '''
         return self.total_latency() > other.total_latency()
 
     def __lt__(self, other) -> bool:
+        '''
+        Compare based on total latency
+        '''
         return self.total_latency() < other.total_latency()
 
     def __str__(self) -> str:
+        '''
+        Return string format for Nagios check results
+        '''
         latency = self.total_latency()
         return f"{self.channel}, {self.start_time.isoformat()}, {latency}s"
 
@@ -137,8 +148,6 @@ class LatestArrivalWorker(Dict[str, ArrivalStat]):
         channel_stats: Channel | List[Channel]
             A single or list of Channel objects from the pysniffwave parser
         '''
-        # Assemble data in string format
-
         # Ensure that channel_stats is iterable
         if isinstance(channel_stats, Channel):
             channel_stats = [channel_stats]
@@ -273,7 +282,11 @@ class LatestArrivalWorker(Dict[str, ArrivalStat]):
             critical=critical,
             warning=warning)
 
-    def sort_list(self):
+    def sort_list(self) -> List[ArrivalStat]:
+        '''
+        Returns a sorted list of ArrivalStatistics, sorted by lowest latency
+        first
+        '''
         stat_list = list(self.values())
         stat_list.sort(key=lambda x: x.total_latency(), reverse=True)
         return stat_list
