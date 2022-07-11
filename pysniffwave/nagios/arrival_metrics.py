@@ -1,25 +1,9 @@
 from datetime import datetime
 import pathlib
 from dataclasses import dataclass
-from pysniffwave.nagios.models import NagiosOutputCode
 from pysniffwave.sniffwave.parser import Channel
 import logging
 from typing import Dict, List, Union
-
-
-# Data class for results of the Stale check
-@dataclass
-class StaleResults:
-    code: NagiosOutputCode
-    count: int
-
-
-# Data class for the results of the Timely check
-@dataclass
-class TimelyResults:
-    code: NagiosOutputCode
-    critical: int
-    warning: int
 
 
 @dataclass
