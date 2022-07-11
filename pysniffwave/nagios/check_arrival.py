@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import List
-from pysniffwave.nagios.arrival_metrics import LatestArrivalWorker, \
-    StaleResults, TimelyResults
+from pysniffwave.nagios.arrival_metrics import LatestArrivalWorker
 from dataclasses import dataclass
 from pysniffwave.nagios.models import NagiosOutputCode, NagiosPerformance, \
     NagiosRange, NagiosResult, NagiosVerbose
@@ -15,6 +14,21 @@ class ArrivalThresholds:
     warn_time: str
     crit_count: str
     warn_count: str
+
+
+# Data class for results of the Stale check
+@dataclass
+class StaleResults:
+    code: NagiosOutputCode
+    count: int
+
+
+# Data class for the results of the Timely check
+@dataclass
+class TimelyResults:
+    code: NagiosOutputCode
+    critical: int
+    warning: int
 
 
 def get_arrival_performance(
@@ -120,6 +134,7 @@ def get_arrival_results(
         thresholds=thresholds
     )
 
+    # Ensure whichever status code is higher is the one returned to Nagios
     statuscode = stale_results.code
 
     if timely_results.code.value > statuscode.value:
@@ -134,13 +149,16 @@ def get_arrival_results(
     else:
         status = "UNKNOWN"
 
+    # Assmeble the summary
     summary = (f'{status} - {stale_results.count} channels stale,' +
                f'{timely_results.warning} channels with latency above' +
                f' {thresholds.warn_time}s, {timely_results.critical} ' +
                f'channels with latency above {thresholds.crit_time}s')
 
+    # Get details
     details = get_details(arrival_stats=arrival_stats)
 
+    # Return Nagios Result in multiline format
     return NagiosResult(
         summary=summary,
         verbose=NagiosVerbose.multiline,
@@ -175,11 +193,14 @@ def check_fresh_arrival(
     count of stale channels
     '''
     stale_channels = 0
+
+    # Count all channels with a start time above 1 hour
     for channel in arrival_stats:
         channel_age = current_time - (arrival_stats[channel]).start_time
         if channel_age.total_seconds() > 3600:
             stale_channels += 1
 
+    # Check count against Nagios thresholds
     if NagiosRange(thresholds.crit_range).in_range(stale_channels):
         state = NagiosOutputCode.critical
     elif NagiosRange(thresholds.warn_range).in_range(stale_channels):

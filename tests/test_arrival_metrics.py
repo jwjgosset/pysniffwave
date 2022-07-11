@@ -1,10 +1,15 @@
+from datetime import datetime
 import pathlib
 from pysniffwave.nagios.arrival_metrics import LatestArrivalWorker
+from pysniffwave.nagios.check_arrival import ArrivalThresholds, \
+    check_fresh_arrival, check_timely_arrival, get_arrival_results
+from pysniffwave.nagios.models import NagiosOutputCode
 from pysniffwave.sniffwave.parser import Channel, parse
 from typing import List
 import pytest
 
 
+# Initialize LatesArrivalWorker as fixture so it only reads the file once
 @pytest.fixture(scope='session')
 def worker():
     arrival_worker = LatestArrivalWorker(
@@ -22,10 +27,8 @@ def worker():
     return arrival_worker
 
 
-# @pytest.mark.usefixtures('test_open_arrival_file')
 def test_LatestArrivalWorker(worker: LatestArrivalWorker):
-    # Parse the test data
-
+    # Test that initialization of worker succeeded as intended
     assert isinstance(worker.path, pathlib.Path)
 
     assert 'FR.SMPL.00.BHZ' in worker
@@ -78,3 +81,102 @@ def test_new_worker():
 def test_sorted_list(worker: LatestArrivalWorker):
     sorted_list = worker.sort_list()
     assert sorted_list[0].channel == 'IV.MGR..HHN'
+
+
+def test_check_stale(worker: LatestArrivalWorker):
+    current_time = datetime(2010, 6, 22, 15, 15, 0)
+    thresholds = ArrivalThresholds(
+        crit_range='9',
+        warn_range='5',
+        crit_time='10',
+        warn_time='5',
+        crit_count='8',
+        warn_count='5'
+    )
+    results = check_fresh_arrival(
+        current_time=current_time,
+        thresholds=thresholds,
+        arrival_stats=worker
+    )
+
+    assert results.code == NagiosOutputCode.ok
+    assert results.count == 3
+
+    current_time = datetime(2010, 6, 22, 15, 15, 55)
+
+    results = check_fresh_arrival(
+        current_time=current_time,
+        thresholds=thresholds,
+        arrival_stats=worker
+    )
+
+    assert results.code == NagiosOutputCode.warning
+    assert results.count == 8
+
+    current_time = datetime(2010, 6, 22, 15, 16, 50)
+
+    results = check_fresh_arrival(
+        current_time=current_time,
+        thresholds=thresholds,
+        arrival_stats=worker
+    )
+
+    assert results.code == NagiosOutputCode.critical
+    assert results.count == 10
+
+
+def test_timely_arrival(worker: LatestArrivalWorker):
+    thresholds = ArrivalThresholds(
+        crit_range='9',
+        warn_range='5',
+        crit_time='10',
+        warn_time='8',
+        crit_count='10',
+        warn_count='8'
+    )
+    results = check_timely_arrival(
+        arrival_stats=worker,
+        thresholds=thresholds)
+
+    assert results.warning == 7
+
+    assert results.code == 0
+
+    thresholds.warn_count = '6'
+
+    results = check_timely_arrival(
+        arrival_stats=worker,
+        thresholds=thresholds)
+
+    assert results.code == 1
+
+    assert results.critical == 7
+
+    thresholds.crit_count = '4'
+
+    results = check_timely_arrival(
+        arrival_stats=worker,
+        thresholds=thresholds)
+
+    assert results.code == 2
+
+
+def test_arrival_results(worker: LatestArrivalWorker):
+    thresholds = ArrivalThresholds(
+        crit_range='9',
+        warn_range='5',
+        crit_time='10',
+        warn_time='8',
+        crit_count='10',
+        warn_count='8'
+    )
+
+    current_time = datetime(2010, 6, 22, 15, 15, 55)
+
+    results = get_arrival_results(
+        current_time=current_time,
+        thresholds=thresholds,
+        arrival_stats=worker
+    )
+
+    assert results.status.value == 1
