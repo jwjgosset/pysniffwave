@@ -44,7 +44,7 @@ import sys
     help=("Path to the file containing the latest arrival statistics")
 )
 @click.option(
-    '--log-levels',
+    '--log-level',
     type=click.Choice([v.value for v in LogLevels]),
     help="Log level",
     default=LogLevels.WARNING
